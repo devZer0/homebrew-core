@@ -1,8 +1,8 @@
 class Opencode < Formula
   desc "AI coding agent, built for the terminal"
   homepage "https://opencode.ai"
-  url "https://registry.npmjs.org/opencode-ai/-/opencode-ai-1.3.10.tgz"
-  sha256 "5e266285a1d65e4ccb3bbc8d9e62cec2b0a3b9cec2fd11b5877bbe050064f7db"
+  url "https://registry.npmjs.org/opencode-ai/-/opencode-ai-1.4.0.tgz"
+  sha256 "339916d6078d6f219ed74cc42b7a3bb70bce47754bcc5cceb9542a7c3e80695b"
   license "MIT"
 
   livecheck do
@@ -22,13 +22,16 @@ class Opencode < Formula
   depends_on "ripgrep"
 
   def install
-    system "npm", "install", *std_npm_args
+    arch = Hardware::CPU.arm? ? "arm64" : "x64"
+    os = OS.linux? ? "linux" : "darwin"
+    # npm 11 honors `--os`/`--cpu` for optional platform package selection.
+    system "npm", "install", "--os=#{os}", "--cpu=#{arch}",
+           *std_npm_args
     bin.install_symlink libexec.glob("bin/*")
 
     # Remove binaries for other architectures, `-musl`, `-baseline`, and `-baseline-musl`
-    arch = Hardware::CPU.arm? ? "arm64" : "x64"
-    os = OS.linux? ? "linux" : "darwin"
-    (libexec/"lib/node_modules/opencode-ai/node_modules").children.each do |d|
+    node_modules = libexec/"lib/node_modules/opencode-ai/node_modules"
+    node_modules.children.each do |d|
       next unless d.directory?
 
       rm_r d if d.basename.to_s != "opencode-#{os}-#{arch}"
